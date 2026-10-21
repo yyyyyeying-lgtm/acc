@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>教练我错了 · 毒舌驾考陪练 v2</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--orange:#FF7A00;--bg:#1F1F1F;--card:#26262b;--line:#3a3a3f;--green:#38b26a;--red:#e5484d;--yellow:#F5C518}
+body{font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:#0e0e10;color:#f2f2f2}
+.stage{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at 50% 30%,#1c1c1f,#0a0a0b)}
+.phone{width:390px;height:844px;background:var(--bg);border:8px solid #000;border-radius:32px;box-shadow:0 30px 80px #000c;position:relative;overflow:hidden;display:flex;flex-direction:column}
+@media (max-width:480px),(max-height:900px){.stage{padding:0}.phone{width:100vw;height:100vh;height:100dvh;border:none;border-radius:0}}
+
+.screen{position:absolute;inset:0;display:none;flex-direction:column;overflow:hidden}
+.screen.active{display:flex;animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.hazard{height:8px;background:repeating-linear-gradient(-45deg,var(--yellow) 0 12px,#141414 12px 24px);flex-shrink:0}
+
+/* 通用组件 */
+.btn{border:none;cursor:pointer;font-family:inherit;border-radius:14px;font-size:16px;font-weight:700;padding:14px;transition:.15s}
+.btn-primary{background:var(--orange);color:#1b1002;width:100%}
+.btn-primary:active{transform:scale(.97)}
+.btn-primary:disabled{opacity:.35;cursor:not-allowed}
+.btn-ghost{background:transparent;border:1.5px solid var(--line);color:#ddd;width:100%}
+.icon-btn{background:#2a2a2f;border:1px solid var(--line);color:#eee;width:34px;height:34px;border-radius:10px;cursor:pointer;font-size:16px;flex-shrink:0}
+.chip{display:inline-block;font-size:12px;color:var(--orange);border:1px solid #5a3d1f;background:#2c1f10;padding:3px 10px;border-radius:999px;margin-bottom:10px}
+.chip.grey{color:#aaa;border-color:#444;background:#2b2b2f}
+
+/* CSS 手绘教练头像（替代 emoji，跨端一致） */
+.ava{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:#fff;flex-shrink:0;border:2.5px solid rgba(255,255,255,.16);box-shadow:inset 0 -6px 12px rgba(0,0,0,.35)}
+.ava-s{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#fff;flex-shrink:0;border:2px solid rgba(255,255,255,.14)}
+
+/* 首页 */
+.home-head{padding:26px 20px 10px;display:flex;justify-content:space-between;align-items:flex-start}
+.home-head h1{font-size:30px;font-weight:900;letter-spacing:1px}
+.home-head h1 em{font-style:normal;color:var(--orange)}
+.slogan{color:#9a9aa2;margin-top:6px;font-size:14px}
+.slogan b{color:var(--yellow)}
+.mini-entries{display:flex;gap:8px}
+.mini-entries button{width:36px;height:36px;border-radius:12px;background:#2a2a2f;border:1px solid var(--line);font-size:15px;cursor:pointer;color:#eee}
+.coach-list{padding:14px 16px;display:flex;flex-direction:column;gap:12px;flex:1;overflow:auto}
+.coach-card{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:14px;display:flex;gap:14px;align-items:center;cursor:pointer;transition:.15s;position:relative}
+.coach-card.sel{border-color:var(--orange);background:#2f2313;box-shadow:0 0 0 3px rgba(255,122,0,.14)}
+.coach-card .nm{font-size:17px;font-weight:800}
+.coach-card .tg{display:inline-block;font-size:11px;color:#c9c9d1;border:1px solid #46464d;border-radius:999px;padding:2px 8px;margin:5px 4px 5px 0}
+.coach-card .qt{color:#F5C518;font-size:12.5px}
+.coach-card .sty{color:#8a8a92;font-size:11px;margin-top:3px}
+.coach-card .pick{position:absolute;right:14px;top:14px;font-size:11px;background:var(--orange);color:#1b1002;border-radius:999px;padding:3px 9px;font-weight:800;display:none}
+.coach-card.sel .pick{display:block}
+.coach-card .try{position:absolute;right:14px;bottom:12px;font-size:10.5px;color:#77777f}
+.coach-card.sel .try{display:none}
+.home-actions{padding:6px 20px 22px}
+.home-actions .gap{height:10px}
+.foot-note{text-align:center;color:#6d6d75;font-size:11px;margin-top:12px}
+
+/* 顶栏 */
+.bar{display:flex;align-items:center;gap:10px;padding:14px 14px 10px;flex-shrink:0}
+.progress-wrap{flex:1}
+.progress-wrap .txt{font-size:12px;color:#9a9aa2;margin-bottom:5px;display:flex;justify-content:space-between}
+.progress{height:6px;background:#333;border-radius:3px;overflow:hidden}
+.progress i{display:block;height:100%;background:var(--orange);border-radius:3px;transition:width .3s}
+.badges{display:flex;gap:6px;font-size:12px}
+.badges span{background:#2a2a2f;border:1px solid var(--line);border-radius:999px;padding:3px 8px;white-space:nowrap}
+.badges .streak{color:var(--orange);border-color:#5a3d1f;display:none}
+.badges .medal{display:none}
+
+/* 题卡 */
+.lianzuo{margin:0 14px;background:#3d2406;border:1.5px dashed var(--orange);color:#FFB366;border-radius:12px;padding:8px;text-align:center;font-size:14px}
+.q-card{margin:12px 14px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px}
+.q-card.cold{background:#232327}
+.stem{font-size:20px;line-height:1.55;font-weight:700;margin-bottom:6px}
+.option{display:block;width:100%;text-align:left;padding:13px 15px;border-radius:14px;border:2px solid var(--line);background:#2c2c31;color:#eee;margin-top:10px;cursor:pointer;font-size:16px;font-family:inherit;transition:.15s}
+.option.sel{border-color:var(--orange);background:#3a2a18}
+.option.right{border-color:var(--green);background:#17301f;animation:pop .45s}
+.option.wrongPick{border-color:var(--red);background:#331a1c;animation:shake .5s}
+.option.reveal{border-color:var(--green)}
+.option:disabled{cursor:default}
+.q-card .btn-primary{margin-top:14px}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.05)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+
+/* 聊天流 */
+.chat{flex:1;overflow-y:auto;padding:4px 14px 10px;scroll-behavior:smooth}
+.row{display:flex;gap:8px;margin-top:10px;align-items:flex-end}
+.row.me{flex-direction:row-reverse}
+.bubble{background:#2b2b31;border:1px solid var(--line);border-radius:14px;border-top-left-radius:4px;padding:10px 13px;font-size:16.5px;line-height:1.6;max-width:82%;cursor:pointer}
+.row.me .bubble{border-top-left-radius:14px;border-top-right-radius:4px;background:#3a2a18;border-color:#5a3d1f}
+.bubble.bad{background:#381d1f;border-color:#7a2b2e}
+.bubble.good{background:#1c3324;border-color:#2c5c3d}
+.bubble.soft{background:#202b3d;border-color:#33455f}
+.bubble.sys{margin:10px auto 0;background:transparent;border:none;color:#77777f;font-size:12px;cursor:default;padding:2px}
+.bname{font-size:11px;color:var(--orange);font-weight:700;margin-bottom:3px}
+.action-row{padding:10px 14px 16px;display:flex;gap:10px;flex-shrink:0}
+.action-row:empty{display:none}
+.action-row .btn{flex:1;padding:12px;font-size:15px}
+.btn-danger{background:#3a1e20;color:#ff8f93;border:1.5px solid #7a2b2e;width:100%}
+
+/* 模拟考 */
+.timer{font-variant-numeric:tabular-nums;font-weight:800;font-size:16px}
+.timer.danger{color:#ff5256;animation:breathe 1s infinite}
+@keyframes breathe{50%{opacity:.35}}
+.btn-primary.cold{background:#3f3f46;color:#fff}
+.exam-note{text-align:center;color:#77777f;font-size:12px;padding:6px 20px}
+.pulse{animation:pulse 1s infinite}
+@keyframes pulse{50%{transform:scale(1.03)}}
+
+/* 渡劫扫场 */
+.sweep{position:absolute;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;background:repeating-linear-gradient(-45deg,var(--yellow) 0 22px,#141414 22px 44px);background-size:200% 200%;animation:sweepMove .8s linear infinite}
+.sweep .inner{background:#141414;border:2px solid var(--yellow);border-radius:16px;padding:18px 30px;font-size:20px;font-weight:900;letter-spacing:4px;color:var(--yellow)}
+@keyframes sweepMove{from{background-position:0 0}to{background-position:62px 0}}
+
+/* 结算文书 */
+.doc-wrap{flex:1;overflow-y:auto;padding:14px}
+.doc{background:#F7EFD9;color:#2a251a;border-radius:14px;padding:20px 18px;position:relative;overflow:hidden;box-shadow:0 10px 30px #0008}
+.doc .doc-hazard{height:7px;background:repeating-linear-gradient(-45deg,#caa50a 0 10px,#3a3324 10px 20px);position:absolute;top:0;left:0;right:0}
+.doc h2{text-align:center;font-size:24px;letter-spacing:8px;margin:10px 0 4px;font-weight:900}
+.doc .doc-no{text-align:center;font-size:11px;color:#8a7f5f;margin-bottom:14px}
+.doc .score-line{text-align:center;margin:6px 0 2px}
+.doc .score-line b{font-size:56px;color:#c2252b;font-family:Georgia,serif}
+.doc .sub{text-align:center;font-size:14px;color:#5c5340;margin-bottom:14px}
+.doc .sec{border-top:1.5px dashed #c9bd97;padding:10px 2px;font-size:14px;line-height:1.7}
+.doc .sec .lbl{font-size:11px;color:#8a7f5f;letter-spacing:2px;display:block;margin-bottom:4px}
+.doc .judge{font-weight:700;line-height:1.7;margin-top:8px;padding-right:56px}
+.doc .sec:last-of-type{padding-bottom:76px}
+.doc.pass{background:#EAF6EE;border:2px solid #38b26a}
+.doc.pass h2{color:#1f6b40}
+.doc .seal{position:absolute;right:14px;bottom:16px;border:3px solid #c2252b;color:#c2252b;border-radius:10px;padding:6px 10px;font-weight:900;font-size:15px;letter-spacing:3px;transform:rotate(-12deg);opacity:.9;animation:stampIn .5s .25s backwards}
+.doc.pass .seal{border-color:#1f6b40;color:#1f6b40}
+@keyframes stampIn{0%{transform:rotate(-12deg) scale(2.4);opacity:0}70%{transform:rotate(-12deg) scale(.92);opacity:1}100%{transform:rotate(-12deg) scale(1)}}
+.result-actions{padding:12px 14px 18px;display:flex;flex-direction:column;gap:10px}
+
+/* 分享卡片 */
+.share-body{flex:1;overflow-y:auto;padding:10px 20px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.poster{width:100%;max-width:330px;aspect-ratio:9/16;background:linear-gradient(165deg,#2e2e34,#191a1e);border:1px solid #3f3f46;border-radius:20px;padding:22px 20px;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.poster .p-hazard{height:8px;background:repeating-linear-gradient(-45deg,var(--yellow) 0 10px,#141414 10px 20px);border-radius:4px;margin-bottom:18px}
+.poster .p-logo{font-size:15px;font-weight:900;letter-spacing:2px}
+.poster .p-logo em{font-style:normal;color:var(--orange)}
+.poster .p-score{font-size:64px;font-weight:900;color:var(--orange);font-family:Georgia,serif;line-height:1.1}
+.poster .p-score small{font-size:16px;color:#9a9aa2;font-family:inherit}
+.poster .p-sub{color:#9a9aa2;font-size:13px;margin-top:4px}
+.poster .p-quote{margin-top:auto;background:#141416;border-left:4px solid var(--orange);border-radius:8px;padding:12px;font-size:14px;line-height:1.7;color:#e8e8ec;min-height:86px;display:flex;align-items:center}
+.poster .p-foot{display:flex;justify-content:space-between;align-items:flex-end;margin-top:14px}
+.poster .p-qr{width:62px;height:62px;border:1.5px dashed #6a6a72;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#8a8a92;text-align:center}
+.poster .p-coach{display:flex;align-items:center;gap:8px;color:#c9c9d1;font-size:13px}
+.poster .p-coach .ava-s{width:26px;height:26px;font-size:12px}
+.poster .p-seal{border:3px solid var(--red);color:var(--red);border-radius:50%;width:66px;height:66px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:15px;transform:rotate(-14deg);opacity:.92}
+.share-tools{display:flex;gap:10px;width:100%;max-width:330px}
+.share-tools .btn{flex:1;padding:11px;font-size:14px}
+
+/* 考前夜话 */
+#scr-night{background:radial-gradient(circle at 72% 16%,#2a3d5c 0%,#131c2b 45%,#0a0f18 100%)}
+.night-moon{width:66px;height:66px;border-radius:50%;background:#F3E8C6;box-shadow:0 0 46px #f3e8c666,0 0 120px #f3e8c633;margin:36px auto 6px;position:relative}
+.night-moon::after{content:"";position:absolute;left:14px;top:18px;width:10px;height:10px;border-radius:50%;background:#e2d4ac}
+.night-moon::before{content:"";position:absolute;left:36px;top:34px;width:7px;height:7px;border-radius:50%;background:#e2d4ac}
+.night-title{text-align:center;font-size:15px;color:#cdd8ec;letter-spacing:6px;margin-bottom:8px}
+.night-ava{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:900;color:#fff;margin:14px auto 0;box-shadow:0 0 24px #6f92c644;border:2px solid rgba(255,255,255,.25);filter:saturate(.7) brightness(1.1)}
+.night-lines{flex:1;overflow-y:auto;padding:14px 22px;display:flex;flex-direction:column;gap:12px}
+.night-lines .bubble{max-width:100%;cursor:default}
+.night-gold{color:#F5E9C8;border-color:#8a744a;background:#2a2416;font-weight:700}
+.night-actions{padding:12px 20px 26px}
+
+/* 错题本 */
+.wrong-body{flex:1;overflow-y:auto;padding:8px 14px 18px}
+.acc{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-top:10px;overflow:hidden}
+.acc-head{display:flex;justify-content:space-between;align-items:center;padding:13px 15px;cursor:pointer;font-weight:700;font-size:15px}
+.acc-head .n{color:var(--red);font-size:13px;font-weight:600}
+.acc-items{display:none;border-top:1px solid var(--line)}
+.acc.open .acc-items{display:block}
+.w-item{padding:13px 15px;border-bottom:1px dashed #33333a}
+.w-item:last-child{border-bottom:none}
+.w-item .stem{font-size:15px;margin-bottom:8px}
+.w-line{font-size:13px;color:#b9b9c1;margin:4px 0}
+.w-line b.ok{color:var(--green)}
+.w-line b.no{color:var(--red)}
+.w-roast{background:#381d1f;border:1px solid #7a2b2e;border-radius:10px;padding:9px 11px;font-size:13px;line-height:1.65;margin:8px 0;color:#f6d9da}
+.tag-mem{display:inline-block;font-size:10px;background:var(--red);color:#fff;border-radius:6px;padding:1px 6px;margin-right:6px;vertical-align:1px}
+.w-tip{font-size:13px;color:#ffca8f;margin-top:6px}
+.empty{text-align:center;color:#77777f;padding:60px 30px;font-size:14px;line-height:1.8}
+
+/* 设置 */
+.set-body{flex:1;overflow-y:auto;padding:8px 16px 20px}
+.set-group-t{font-size:12px;color:#8a8a92;margin:16px 2px 6px;letter-spacing:1px}
+.set-row{display:flex;justify-content:space-between;align-items:center;background:var(--card);border:1px solid var(--line);padding:14px 16px;border-radius:14px;margin-top:10px}
+.set-row .lb{font-size:15px}
+.set-row .sub{font-size:12px;color:#8a8a92;margin-top:3px}
+.switch{width:48px;height:27px;border-radius:14px;background:#3a3a3f;position:relative;cursor:pointer;transition:.2s;flex-shrink:0}
+.switch i{position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;background:#fff;transition:.2s}
+.switch.on{background:var(--orange)}
+.switch.on i{left:24px}
+.coach-chips{display:flex;gap:8px;margin-top:10px}
+.cchip{flex:1;background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center;font-size:13px;cursor:pointer}
+.cchip.sel{border-color:var(--orange);color:var(--orange);font-weight:700}
+
+/* 浮层 */
+.overlay{position:absolute;inset:0;background:#000b;z-index:40;display:flex;align-items:center;justify-content:center}
+.modal{background:#28282d;border:1px solid #46464d;border-radius:20px;padding:24px 20px;width:84%;text-align:center}
+.modal h3{font-size:20px;margin-bottom:14px}
+.modal .big{font-size:44px;font-weight:900;color:var(--orange)}
+.modal .stats{color:#9a9aa2;font-size:13px;line-height:2;margin:10px 0 16px}
+.modal .btn{margin-top:10px}
+.egg{position:absolute;top:76px;left:14px;right:14px;z-index:60;background:linear-gradient(#3a2a12,#2b1f0d);border:1.5px solid var(--orange);border-radius:16px;padding:14px;text-align:center;animation:eggIn .35s ease}
+.egg .t1{font-weight:900;font-size:16px;color:var(--orange)}
+.egg .t2{font-size:13px;color:#e8d9c2;margin-top:5px;line-height:1.6}
+@keyframes eggIn{from{transform:translateY(-16px);opacity:0}to{transform:none;opacity:1}}
+.toast{position:absolute;bottom:96px;left:50%;transform:translateX(-50%) translateY(8px);background:#000d;border:1px solid #444;color:#fff;font-size:13px;padding:9px 16px;border-radius:12px;z-index:90;opacity:0;pointer-events:none;transition:.25s;max-width:82%;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="stage">
+<div class="phone" id="phone">
+
+  <!-- ① 首页 · 选教练 -->
+  <section class="screen active" id="scr-home">
+    <div class="hazard"></div>
+    <div class="home-head">
+      <div>
+        <h1>教练<em>我错了</em></h1>
+        <div class="slogan">科目一，先过<b>教练这一关</b>。</div>
+      </div>
+      <div class="mini-entries">
+        <button id="btn-night-mini" title="考前夜话">🌙</button>
+        <button data-go="wrong" title="错题本">📕</button>
+        <button data-go="settings" title="设置">⚙️</button>
+      </div>
+    </div>
+    <div class="coach-list" id="coachList"></div>
+    <div class="home-actions">
+      <button class="btn btn-primary" id="btn-start">开始挨骂</button>
+      <div class="gap"></div>
+      <button class="btn btn-ghost" id="btn-exam-direct">直接去模拟考渡劫 →</button>
+      <div class="foot-note">模拟考结果仅用于练习，非官方成绩</div>
+    </div>
+  </section>
+
+  <!-- ② 刷题页 -->
+  <section class="screen" id="scr-practice">
+    <div class="hazard"></div>
+    <header class="bar">
+      <button class="icon-btn" data-go="home">←</button>
+      <div class="progress-wrap">
+        <div class="txt"><span id="pr-progress-text"></span><span id="pr-acc">正确率 —</span></div>
+        <div class="progress"><i id="pr-fill" style="width:0%"></i></div>
+      </div>
+      <div class="badges">
+        <span class="medal" id="pr-medal">🥇×0</span>
+        <span class="streak" id="pr-streak">🔥×0</span>
+      </div>
+    </header>
+    <div class="lianzuo" id="lianzuoBar" style="display:none">连坐挑战 <b id="lz-count">0/3</b> · 答错继续加题，最多 5</div>
+    <div class="q-card">
+      <span class="chip" id="pr-chip"></span>
+      <div class="stem" id="pr-stem"></div>
+      <div id="pr-options"></div>
+      <button class="btn btn-primary" id="pr-confirm" disabled>确认答案</button>
+    </div>
+    <div class="chat" id="pr-chat"></div>
+    <div class="action-row" id="pr-actions"></div>
+  </section>
+
+  <!-- ③ 模拟考 -->
+  <section class="screen" id="scr-exam">
+    <div style="height:8px;background:#2c2c31"></div>
+    <header class="bar">
+      <button class="icon-btn" id="exam-quit">←</button>
+      <div class="progress-wrap"><div class="txt"><span id="ex-progress"></span><span>模拟考 · 教练沉默中</span></div>
+      <div class="progress"><i id="ex-fill" style="width:0%"></i></div></div>
+      <div class="timer" id="ex-timer">05:00</div>
+    </header>
+    <div class="q-card cold">
+      <span class="chip grey" id="ex-chip"></span>
+      <div class="stem" id="ex-stem"></div>
+      <div id="ex-options"></div>
+    </div>
+    <div class="exam-note">考试中教练不提醒、不点评，全靠自己</div>
+    <div style="flex:1"></div>
+    <div class="action-row"><button class="btn btn-primary cold" id="ex-submit">交卷</button></div>
+  </section>
+
+  <!-- ④ 结算 -->
+  <section class="screen" id="scr-result">
+    <div class="hazard"></div>
+    <header class="bar">
+      <button class="icon-btn" data-go="home">←</button>
+      <div style="font-weight:800" id="result-title">成绩单</div>
+    </header>
+    <div class="doc-wrap"><div id="result-body"></div></div>
+    <div class="result-actions" id="result-actions"></div>
+  </section>
+
+  <!-- ⑤ 分享卡片 -->
+  <section class="screen" id="scr-share">
+    <div class="hazard"></div>
+    <header class="bar">
+      <button class="icon-btn" id="share-back">←</button>
+      <div style="font-weight:800">成绩分享卡</div>
+      <div style="flex:1"></div>
+    </header>
+    <div class="share-body">
+      <div class="poster" id="poster">
+        <div class="p-hazard"></div>
+        <div class="p-logo">教练<em>我错了</em> · 驾考渡劫实录</div>
+        <div style="flex:1"></div>
+        <div class="p-score" id="p-score">——<small> 分</small></div>
+        <div class="p-sub" id="p-sub">今日被教练骂了 0 次</div>
+        <div class="p-quote" id="p-quote"></div>
+        <div class="p-foot">
+          <div class="p-coach"><span class="ava-s" id="p-coach-ava">张</span><span id="p-coach-name">东北老张</span></div>
+          <div class="p-qr">扫码挨骂<br>（占位）</div>
+          <div class="p-seal" id="p-seal">老张</div>
+        </div>
+      </div>
+      <div class="share-tools">
+        <button class="btn btn-ghost" id="quote-prev">↑ 换一条</button>
+        <button class="btn btn-ghost" id="quote-next">↓ 换一条</button>
+      </div>
+      <div class="share-tools">
+        <button class="btn btn-primary" id="btn-save">保存图片</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ⑥ 考前夜话 -->
+  <section class="screen" id="scr-night">
+    <header class="bar">
+      <button class="icon-btn" id="night-back" style="background:#223049;border-color:#3c5378">←</button>
+      <div style="flex:1"></div>
+    </header>
+    <div class="night-moon"></div>
+    <div class="night-title">考 前 夜 话</div>
+    <div class="night-ava" id="night-ava">张</div>
+    <div class="night-lines" id="night-lines"></div>
+    <div class="night-actions"><button class="btn btn-primary" id="night-done" style="display:none">收下，晚安</button></div>
+  </section>
+
+  <!-- ⑦ 错题本 -->
+  <section class="screen" id="scr-wrong">
+    <div class="hazard"></div>
+    <header class="bar">
+      <button class="icon-btn" data-go="home">←</button>
+      <div style="font-weight:800;flex:1">错题本（回忆杀版）</div>
+    </header>
+    <div class="wrong-body" id="wrong-body"></div>
+    <div class="action-row"><button class="btn btn-primary" id="btn-repair">重修模式 · 只刷错题</button></div>
+  </section>
+
+  <!-- ⑧ 设置 -->
+  <section class="screen" id="scr-settings">
+    <div class="hazard"></div>
+    <header class="bar">
+      <button class="icon-btn" data-go="home">←</button>
+      <div style="font-weight:800">设置</div>
+    </header>
+    <div class="set-body">
+      <div class="set-group-t">教练</div>
+      <div class="coach-chips" id="set-coach-chips"></div>
+      <div class="set-group-t">偏好</div>
+      <div class="set-row"><div><div class="lb">语音播报</div><div class="sub">教练开口骂你 / 夸你</div></div><div class="switch on" id="sw-voice"><i></i></div></div>
+      <div class="set-row"><div><div class="lb">温柔模式</div><div class="sub">去掉感叹号 · 音量 -20%</div></div><div class="switch" id="sw-gentle"><i></i></div></div>
+      <div class="set-group-t">数据</div>
+      <div class="set-row" id="btn-reset" style="cursor:pointer"><div><div class="lb" style="color:#ff8f93">重置进度</div><div class="sub">清空错题本、金牌与成绩</div></div><div style="color:#777">›</div></div>
+      <div class="foot-note">「教练我错了」交互原型 v2 · 题库仅作演示</div>
+    </div>
+  </section>
+
+  <!-- 渡劫扫场 -->
+  <div class="sweep" id="examSweep" style="display:none"><div class="inner">渡 劫 中 …</div></div>
+  <!-- 连对彩蛋横幅 -->
+  <div class="egg" id="eggBanner" style="display:none">
+    <div class="t1">🔥 连对 5 题 · 教练心情好</div>
+    <div class="t2" id="egg-text"></div>
+  </div>
+  <div class="toast" id="toast"></div>
+</div>
+</div>
+
+<script>
+/* ================= 教练人设（含开场/试听/通过/挂科/放行/清零，全部按人设分轨） ================= */
+const COACHES = {
+  zhang:{key:'zhang',name:'东北老张',char:'张',color:'#FF7A00',avaBg:'#4a341a',tag:'东北话 · 大嗓门',quote:'“麻溜的！”',style:'骂：离谱比喻 / 夸：咋呼实在嗑',
+    sample:'来来来，试听一句——灯光题不会的，今儿别吃饭了！麻溜的开始！',
+    opener:'坐稳了！十道题，答错别怪老张嘴黑，我可是为你好！开始！',
+    pass:'行啊小子，科一让你拿捏了！别嘚瑟，科二教练比我狠十倍，自求多福！',
+    fail:'离及格就差一步，你搁这儿玩心跳呢？回炉，重刷，明儿再来！',
+    release:'行，算你过关，下不为例！麻溜的，下一题！',
+    clear:'清零了！老张这辈子没见过改这么彻底的，服！',
+    seal:'老张',rate:1.05,pitch:0.8},
+  yao:{key:'yao',name:'川渝幺妹',char:'幺',color:'#E05252',avaBg:'#4a1f24',tag:'四川话 · 辣中带娇',quote:'“要得嘛！”',style:'骂：灵魂反问 / 夸：软乎夹规矩',
+    sample:'试听一下嘛——错了莫要哭哦，幺妹凶起来连自己都怕！要得，开始！',
+    opener:'小同学坐好哦，今天幺妹陪你刷题，错了不许跳，要得吗？',
+    pass:'要得！科一把你放行了！保持这股机灵劲儿，科二科三继续乖！',
+    fail:'差一点点就及格了嘛，脑壳里的知识点遭你甩了几个哦？回来重修，幺妹陪你慢慢磨！',
+    release:'算你过关，还可以嘛！下一题，继续！',
+    clear:'错题清零了喃！乖得很，幺妹给你点个大大的赞！',
+    seal:'幺妹',rate:1.0,pitch:1.25},
+  wang:{key:'wang',name:'教导主任',char:'王',color:'#3B6FD4',avaBg:'#22304a',tag:'普通话 · 阴阳怪气',quote:'“很好，我记下了。”',style:'骂：格式化判词 / 夸：冷面肯定',
+    sample:'试听——这道题的答案，我建议你抄在脑门上，方便我随时检查。开始。',
+    opener:'请坐。十道题，全程记录，纳入本学期综合考评。开始。',
+    pass:'成绩尚可，态度端正。批准结案。但请记住：路考的阅卷人，是路况本身。',
+    fail:'本主任批阅完毕：知识储备不足以支撑你合法上路。罚单已开好，重修，直到我满意为止。',
+    release:'勉强过关。下不为例，同学。',
+    clear:'全部清零。很好，我记下了——是好消息的那种记下。',
+    seal:'王主任',rate:0.92,pitch:0.75}
+};
+
+/* ================= 题库：每题 × 3 教练全量骂/夸 ================= */
+const QS = [
+  {id:1,type:'choice',chapter:'灯光使用',
+   stem:'夜间驾驶机动车与对向来车会车时，应当在距对方来车多少米以外改用近光灯？',
+   options:['50米','100米','150米','200米'],answer:2,
+   roast:{zhang:'150米换近光都记不住？你搁这儿开探照灯呢？对面司机好好开着车，让你整成白内障了！150米！麻溜的记住！',
+          yao:'会车不切近光，你是想把对面司机闪成星星眼嗦？150米以外就要切，记到起！灯光题连刷三道，搞快点！',
+          wang:'150米，同学。你把远光灯当探照设备使用，对向司机的视网膜已经向你提出严正抗议。这个数字，我希望下不为例。'},
+   praise:{zhang:'哟？150米换近光都会了？看来上次探照灯那事儿你记住了……不是，我是说，你进步了。',
+           yao:'150米切近光，答对咯！对面司机不用遭你闪，大家都安逸。就这么稳到起，要得！',
+           wang:'150米以外改用近光灯，答对了。你护住了对向司机的眼睛，也保住了自己的分数。很好，我记下了。'},
+   tip:'夜间会车 150 米以外改用近光灯，防止眩目。'},
+  {id:2,type:'judge',chapter:'掉头与斑马线',
+   stem:'在人行横道上可以掉头。',
+   options:['正确','错误'],answer:1,
+   roast:{zhang:'斑马线上掉头？你咋不上天呢？大爷大妈正过马路呢，你给人家整一个原地漂移，大爷这把年纪经不起你这么考验啊！斑马线，禁掉头！',
+          yao:'斑马线上掉头？大爷大妈过马路过到一半，你给他们表演原地转圈圈嗦？斑马线，禁掉头！记不到就抄三遍！',
+          wang:'在人行横道上掉头，同学，你是在用行人的安全感练习方向盘圈数。斑马线禁止掉头——这是法条，不是建议。抄三遍。'},
+   praise:{zhang:'知道斑马线不能掉头，大爷大妈的广场舞C位保住了！记住喽，斑马线是行人的生命线，也是你的高压线！',
+           yao:'晓得斑马线不能掉头，乖！行人的生命线就是你的高压线，这句话记到，幺妹放心一半了。',
+           wang:'人行横道禁止掉头，答对了。你让出的不只是几平方米路面，是行人的安全感。继续。'},
+   tip:'人行横道、桥梁、隧道、陡坡禁止掉头。'},
+  {id:3,type:'choice',chapter:'超车规则',
+   stem:'机动车超车时，应当从前车的哪一侧超越？',
+   options:['左侧','右侧','任意一侧','内侧行车道'],answer:0,
+   roast:{zhang:'右边超车？左边敞亮大道你不走，非得钻人家右后视镜底下，人家司机回头一看：嚯，哪来的刺客？！超车从左边，给我刻脑门上！',
+          yao:'从右边超车？左边那么宽的道你不走，非要往别个盲区头钻，人家后视镜一看：咦，哪儿冒出来的哦！超车走左边，记死！',
+          wang:'右侧超车——一个把“盲区”二字演绎得淋漓尽致的选择。超车从左侧，这是写进法规的。你若记不住，我们可以谈一谈了。'},
+   praise:{zhang:'超车从左、动方向前先看后视镜三秒——稳！马路上最帅的不是加塞快，是变道稳，就这么开！',
+           yao:'超车走左边，答对了！变道前先瞟后视镜三秒，稳稳当当的，比那些乱串的帅多了！',
+           wang:'左侧超车，答对了。规则之内的快，才是真的快。这个答案，合格。'},
+   tip:'超车一律从左侧；变道前先观察后视镜 3 秒。'},
+  {id:4,type:'judge',chapter:'爆胎应急处置',
+   stem:'行驶中车辆爆胎，应立即踩下制动踏板紧急制动。',
+   options:['正确','错误'],answer:1,
+   roast:{zhang:'爆胎了你敢一脚急刹？！你这是开车呢还是玩漂移呢？车屁股一撅，你直接跟大地来个亲密接触！握稳方向，缓抬油门，记住喽！',
+          yao:'爆胎一脚急刹踩下去？你莫慌嘛！方向一甩你就遭甩出去咯！握稳方向、松油门、点刹，保命的顺序一道都不许错！',
+          wang:'爆胎瞬间急刹车——同学，你成功地把一次机械故障升级成了一场交通事故。握稳方向，缓抬油门。这个顺序关乎性命，请背诵。'},
+   praise:{zhang:'爆胎不急刹、握稳方向缓抬油门——哎妈，这你都会！你这水平科一都装不下了，快去科二让教练接着收拾你！',
+           yao:'爆胎不急刹，握稳方向慢慢收油——答对了！关键时刻不慌神的司机，才是真司机！',
+           wang:'爆胎不急刹、稳方向、缓收油，答对了。应急处置考的不是手速，是冷静。你有。'},
+   tip:'爆胎：握紧方向、缓抬加速踏板，切忌紧急制动。'},
+  {id:5,type:'choice',chapter:'酒驾处罚',
+   stem:'饮酒后驾驶机动车的，机动车驾驶证将被暂扣多长时间？',
+   options:['1个月','3个月','6个月','12个月'],answer:2,
+   roast:{zhang:'喝完酒还想摸方向盘？你搁这儿拿驾照当赌注呢？逮到就是暂扣六个月，打车上班打到肉疼！代驾几十块的事，非要用半年驾照换，六个月！记住！',
+          yao:'喝了酒还想摸方向盘嗦？你怕不是喝了假酒哦！隔两步路也是酒驾，遭逮到暂扣驾照六个月，你走路上班看安逸不安逸！代驾十块钱的事，你非要拿驾照去赌嗦？',
+          wang:'饮酒驾驶，暂扣驾照六个月，同学。你以为赌的是运气，实际押上的是半年的方向盘。代驾的价格和自由的标价，自己掂量。'},
+   praise:{zhang:'六个月！答对了！喝酒不开车这账算明白了，比啥都强！继续保持，别让我逮着你犯糊涂！',
+           yao:'喝酒不开车，开车不喝酒——答对了，乖！代驾师傅那十块钱，比你驾照上的十二分金贵多了，这个账会算，幺妹给你点个赞！',
+           wang:'暂扣六个月，答对了。记住这个数字的代价，比记住数字本身更重要。很好。'},
+   tip:'饮酒驾驶：罚款 + 记 12 分 + 暂扣驾照 6 个月。'},
+  {id:6,type:'judge',chapter:'实习期规定',
+   stem:'驾驶人在实习期内，可以单独驾驶机动车上高速公路行驶。',
+   options:['正确','错误'],answer:1,
+   roast:{zhang:'实习期想一个人上高速？你小子胆儿挺肥啊！三年以上驾龄的老司机坐副驾，这是硬杠杠！没人陪就老实搁底下跑，规矩连刷三道！',
+          yao:'实习期就想一个人上高速？你莫不是想现场考核业务水平哦！要三年以上驾龄的老师傅陪你，不然就遭交警请去喝茶。师傅都不要，你咋个恁个虎喃！',
+          wang:'实习期单独上高速——同学，你的自信没有任何法规依据。须三年以上驾龄人员陪同。这不是商量，是规定。我等你抄完。'},
+   praise:{zhang:'知道实习期上高速得有老司机压阵，行啊！规矩记住了比啥都强，继续！',
+           yao:'晓得实习期上高速要老师傅陪，乖得很！老司机往副驾一坐，高速都要温柔三分——规矩不是限制你，是给你当靠山！',
+           wang:'实习期上高速须陪同，答对了。新手最大的成熟，是知道自己新。继续保持。'},
+   tip:'实习期上高速需持相应准驾车型 3 年以上驾龄者陪同。'},
+  {id:7,type:'choice',chapter:'安全装置',
+   stem:'车辆发生追尾时，安全头枕调整到什么位置才能有效保护驾驶人？',
+   options:['中心对正后脑勺，保护颈部','越低越好','越高越好','随个人喜好'],answer:0,
+   roast:{zhang:'头枕耷拉到脖子根？你当那是沙发靠垫呢？追尾一下子，脖子嘎嘣你就老实了！中心对准后脑勺，保命的玩意儿，麻溜调对！',
+          yao:'头枕给你调到腰杆上，你是当靠枕头哦？追尾的时候脑壳甩得像拨浪鼓，颈椎喊救命！头枕中心对到后脑勺——那是保命的，不是给你垫着耍手机的！',
+          wang:'头枕调至腰部，同学，你把它当腰垫使用，它便无法在追尾时护住你的颈椎。中心对正后脑勺——这不是舒适性配置，是保命配置。'},
+   praise:{zhang:'头枕对准后脑勺，会了！这玩意儿平时没存在感，关键时候救脖子，就这么调！',
+           yao:'头枕对到后脑勺，答对了！那一声“咔哒”调好的不是枕头，是你的颈椎保险。安全带再一拉，双重保险，要得！',
+           wang:'头枕中心对正后脑勺，答对了。安全装置的意义，在于你永远希望用不上它。理解到位。'},
+   tip:'头枕中心对正后脑勺，追尾时保护颈椎。'},
+  {id:8,type:'choice',chapter:'高速故障处置',
+   stem:'机动车在高速公路上发生故障，警告标志应当设置在故障车来车方向多少米以外？',
+   options:['50米','100米','150米','30米'],answer:2,
+   roast:{zhang:'高速上故障牌摆50米？后车嗖一下子过来，50米够干啥的？150米以外！人撤到护栏外，双闪报警，这套连招给我记住喽！',
+          yao:'高速上牌子才放50米？后车刹都刹不赢哦！150米以外摆起，人站到护栏外头去，双闪打开再报警，顺序都不许乱！',
+          wang:'高速上放50米？后车从看见三角牌到刹停需要一段美妙的距离，而你选择让它现场表演。150米以外，同学。你是想考核后车司机的反应速度，还是想组织一场碰撞艺术展？'},
+   praise:{zhang:'150米以外摆牌，人撤护栏外，双闪报警——全对！这顺序是拿命换的经验，你记住了，我放心！',
+           yao:'150米摆牌、人撤护栏外、开双闪再报警——答对咯！先保人再保车，这个顺序值一百道题，幺妹给你记一功！',
+           wang:'150米以外放置警告标志，人员撤离护栏外，开启双闪并报警。你记住的不只是数字，是顺序——先保人，再保车。这个顺序，值一百道题。'},
+   tip:'高速故障：150 米外设警告标志，人撤护栏外，开双闪报警。'},
+  {id:9,type:'judge',chapter:'路口让行',
+   stem:'通过没有交通信号灯控制的交叉路口时，应当让右方道路来车先行。',
+   options:['正确','错误'],answer:0,
+   roast:{zhang:'没灯的路口你问我让谁？让右！你搁路口凭感觉开，出事儿责任认定书可不跟你讲感觉！让右，刻脑门上！',
+          yao:'没红绿灯的路口你不让右？你凭“我觉得”开车嗦？责任认定书可不认你的“我觉得”哦！让右先行，路口的规矩，记死！',
+          wang:'没灯没交警的路口你问我让谁？让右。为什么？因为责任认定书上写得明明白白。你在路口凭“我觉得”开车，恭喜你，人生将迎来一次印象深刻的会谈——与保险理赔员的。'},
+   praise:{zhang:'让右先行，答对了！路口谁拳头硬不如谁规矩硬，你这么开，稳妥！',
+           yao:'无灯路口让右，答对咯！让行不是怂，是懂规矩。路口的语法，你及格了哈！',
+           wang:'无灯路口让右先行，答对了。让行不是懦弱，是路口的语法。你的语法，及格了。'},
+   tip:'无信号灯路口：让右方道路来车先行。'},
+  {id:10,type:'judge',chapter:'应急车道',
+   stem:'高速公路前方拥堵时，可以借用应急车道行驶。',
+   options:['正确','错误'],answer:1,
+   roast:{zhang:'堵车就钻应急车道？那是救护车的道，不是给你抄近道的！你省两分钟，人家救命晚两分钟，这账你会算不？生命通道，不许占！',
+          yao:'堵起就往应急车道挤？那是救命通道，不是你的VIP通道哦！你快两分钟，救护车就慢两分钟，这个账算得明白不？',
+          wang:'堵车就借应急车道？同学，那是生命通道，不是你人生的快速通道。你超过去省两分钟，救护车上的人就多等两分钟。规矩是冷的，但它背后是热的。'},
+   praise:{zhang:'应急车道不占道，答对了！你让出来的不是车道，是人家的救命时间，好样的！',
+           yao:'应急车道留给救护车，答对咯！今天你让的是一条道，关键时候就是一条命。乖，幺妹记到起了！',
+           wang:'应急车道留给救护车，答对了。这一次，你让出的是一条生命通道。很好，我记下了——是好消息的那种记下。'},
+   tip:'应急车道是生命通道，拥堵时占用属违法。'}
+];
+
+/* 连坐开场话术（按人设分池，{ch} 替换为当前知识点） */
+const LIANZUO_LINES = {
+  zhang:['来，{ch}连刷三道，刷不会今儿别吃饭了！','{ch}没整明白是吧？连坐三道，一道都不许糊弄！'],
+  yao:['来嘛，{ch}连坐三道，做到你看到它就想到我！','{ch}还没搞归一哦？三道连坐，幺妹盯到起！'],
+  wang:['{ch}，连坐三道。做完再来见我，我等你。','既然{ch}没掌握，那就三道连坐。规矩就是规矩。']
+};
+const EGG_PRAISE = [
+  '连对五题？行啊，今天太阳打西边出来了……不是，是你开窍了。',
+  '你这正确率，我都想给你颁个“糊弄不了奖”。',
+  '别骄傲啊，我夸你是因为快没词骂了。'
+];
+const MEDAL_TEXT = '🥇 免骂金牌自动抵扣！这题……教练忍住了。但错题本已经默默记下了，下次注意！';
+const NIGHT_LINES = [
+  '刷了一天题，脑子成浆糊了吧？',
+  '怕挂科，说明你在乎方向盘后面的人——包括你自己。',
+  '明天别慌。题没你狠，但它比你怕你。'
+];
+
+/* ================= 状态（localStorage 持久化） ================= */
+const store=(k,v)=>{try{localStorage.setItem('jlwc2_'+k,JSON.stringify(v));}catch(e){}};
+const loadk=(k,d)=>{try{const v=localStorage.getItem('jlwc2_'+k);return v?JSON.parse(v):d;}catch(e){return d;}};
+function freshState(){return{
+  coach:'zhang', voiceOn:true, gentleMode:false,
+  medal:0, streak:0, roastCount:0,
+  totalCorrect:0, totalAnswered:0,
+  wrongBook:[],   // {qid, picked, roast, coachName, ts}
+  roasts:[],      // 收集的骂语（分享卡用）
+  lastExam:null   // {score, pass}
+};}
+let state = Object.assign(freshState(), loadk('state', {}));
+function save(){ store('state', state); }
+
+/* ================= 工具 ================= */
+const $ = s=>document.querySelector(s);
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));const t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function coach(){return COACHES[state.coach]||COACHES.zhang;}
+function soft(t){return state.gentleMode?t.replace(/！/g,'。'):t;}
+function roastOf(q){return q.roast[state.coach]||q.roast.zhang;}
+function praiseOf(q){return q.praise[state.coach]||q.praise.zhang;}
+function lianzuoLine(ch){
+  const pool=LIANZUO_LINES[state.coach]||LIANZUO_LINES.zhang;
+  return pool[Math.floor(Math.random()*pool.length)].replace('{ch}',ch);
+}
+
+let zhVoice=null;
+function loadVoices(){try{const vs=speechSynthesis.getVoices();zhVoice=vs.find(v=>/zh[-_]CN/i.test(v.lang))||vs.find(v=>/^zh/i.test(v.lang))||null;}catch(e){}}
+if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices;}
+function speak(text){if(!state.voiceOn||!('speechSynthesis' in window)||!text)return;
+  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(soft(text));
+  const c=coach();u.lang='zh-CN';if(zhVoice)u.voice=zhVoice;u.rate=c.rate;u.pitch=c.pitch;
+  u.volume=state.gentleMode?0.8:1;speechSynthesis.speak(u);}catch(e){}}
+
+let curTyper=null;
+function typer(el,text,speed,done){
+  if(curTyper)finishTyper();
+  el.textContent='';
+  let i=0;
+  const st={el:el,text:text,timer:null,done:done,finished:false};
+  st.finish=function(){if(st.finished)return;st.finished=true;clearInterval(st.timer);el.textContent=text;if(done)done();};
+  st.timer=setInterval(function(){i++;el.textContent=text.slice(0,i);
+    if(i>=text.length){st.finished=true;clearInterval(st.timer);if(done)done();}},speed);
+  if(el.parentElement)el.parentElement.addEventListener('click',function(){st.finish();},{once:true});
+  curTyper=st;return st;
+}
+function finishTyper(){if(curTyper){curTyper.finish();curTyper=null;}}
+
+let toastTimer=null;
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.classList.remove('show');},2000);}
+
+function go(name){
+  finishTyper();
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  $('#scr-'+name).classList.add('active');
+  if(name==='wrong')renderWrong();
+  if(name==='settings')renderSettings();
+  if(name==='share')renderShare();
+  if(name!=='exam')stopExamTimer();   /* 修复参考版：原判断写成了 'scr-exam' 永远不成立 */
+}
+document.addEventListener('click',function(e){
+  const g=e.target.closest('[data-go]');if(g)go(g.dataset.go);
+});
+
+/* ================= 首页 ================= */
+function buildCoachList(){
+  const box=$('#coachList');box.innerHTML='';
+  Object.values(COACHES).forEach(function(c){
+    const d=document.createElement('div');
+    d.className='coach-card'+(state.coach===c.key?' sel':'');
+    d.innerHTML='<div class="ava" style="background:'+c.avaBg+';border-color:'+c.color+'55">'+c.char+'</div>'
+      +'<div><div class="nm">'+c.name+'</div><div class="tg">'+c.tag+'</div><div class="qt">'+c.quote+'</div>'
+      +'<div class="sty">'+c.style+'</div></div>'
+      +'<div class="pick">已选</div><div class="try">点击试听 ▶</div>';
+    d.onclick=function(){state.coach=c.key;save();buildCoachList();speak(c.sample);};
+    box.appendChild(d);
+  });
+}
+$('#btn-start').onclick=function(){startPractice('normal');};
+$('#btn-exam-direct').onclick=function(){startExam();};
+
+/* ================= 刷题 ================= */
+let pr=null;
+function startPractice(mode,queue){
+  pr={mode:mode||'normal',queue:queue||shuffle(QS),idx:0,correct:0,wrong:0,newWrong:0,
+      lz:null,selected:null,answeredLock:false};
+  $('#pr-chat').innerHTML='';
+  $('#pr-actions').innerHTML='';
+  go('practice');
+  updatePracticeHUD();
+  pr.cur=pr.queue[0];
+  renderQ();
+  coachSay(coach().opener);
+}
+function updatePracticeHUD(){
+  const acc=state.totalAnswered?Math.round(state.totalCorrect/state.totalAnswered*100)+'%':'—';
+  $('#pr-acc').textContent='正确率 '+acc;
+  const m=$('#pr-medal');m.textContent='🥇×'+state.medal;m.style.display=state.medal?'':'none';
+  const s=$('#pr-streak');s.textContent='🔥×'+state.streak;s.style.display=state.streak>=2?'':'none';
+}
+function chatRow(side,html,cls){
+  const chat=$('#pr-chat');
+  const row=document.createElement('div');row.className='row '+(side||'coach');
+  if(side!=='sys'){
+    row.innerHTML=(side==='me'?'':'<div class="ava-s" style="background:'+coach().avaBg+';border-color:'+coach().color+'55">'+coach().char+'</div>')+'<div class="bubble '+(cls||'')+'">'+(side==='me'?'':'<div class="bname">'+coach().name+'</div>')+'<span class="bt"></span></div>';
+    chat.appendChild(row);
+  }else{
+    row.innerHTML='<div class="bubble sys">'+html+'</div>';chat.appendChild(row);
+  }
+  chat.scrollTop=chat.scrollHeight;return row.querySelector('.bt')||row.querySelector('.bubble')||row;
+}
+function coachSay(text,done,cls){
+  const b=chatRow('coach','',cls||'');
+  speak(text);
+  typer(b,soft(text),34,done);
+}
+function sysSay(html){chatRow('sys',html);}
+function setActions(list){
+  const box=$('#pr-actions');box.innerHTML='';
+  list.forEach(function(a){const b=document.createElement('button');b.className='btn '+(a.cls||'btn-primary');b.textContent=a.label;b.onclick=a.fn;box.appendChild(b);});
+}
+
+function renderQ(){
+  const q=pr.cur; if(!q)return;
+  pr.selected=null;pr.answeredLock=false;
+  $('#pr-chip').textContent='考点 · '+q.chapter;
+  $('#pr-stem').textContent=q.stem;
+  const box=$('#pr-options');box.innerHTML='';box.dataset.locked='';
+  q.options.forEach(function(op,i){
+    const b=document.createElement('button');b.className='option';
+    b.textContent=(q.type==='choice'?('ABCD'[i]+'. '):'')+op;
+    b.onclick=function(){if(box.dataset.locked==='1')return;
+      box.querySelectorAll('.option').forEach(function(x){x.classList.remove('sel');});
+      b.classList.add('sel');pr.selected=i;$('#pr-confirm').disabled=false;};
+    box.appendChild(b);
+  });
+  $('#pr-confirm').disabled=true;
+  setActions([]);
+  if(pr.lz){$('#lianzuoBar').style.display='';$('#lz-count').textContent=pr.lz.done+'/'+pr.lz.need;
+    $('#pr-progress-text').textContent='连坐中';
+    $('#pr-fill').style.width=(pr.lz.done/Math.max(pr.lz.need,1)*100)+'%';
+  }else{
+    $('#lianzuoBar').style.display='none';
+    const total=pr.queue.length;
+    $('#pr-progress-text').textContent=pr.mode==='repair'?('重修 '+(pr.idx+1)+'/'+total):('第 '+(pr.idx+1)+'/'+total+' 题');
+    $('#pr-fill').style.width=(pr.idx/total*100)+'%';
+  }
+  updatePracticeHUD();
+}
+function renderNextNormal(){
+  if(pr.idx>=pr.queue.length){showPracticeSummary();return;}
+  pr.cur=pr.queue[pr.idx];renderQ();
+}
+
+$('#pr-confirm').onclick=function(){
+  if(pr.answeredLock||pr.selected==null)return;
+  const q=pr.cur;pr.answeredLock=true;
+  const box=$('#pr-options');box.dataset.locked='1';
+  const opts=box.querySelectorAll('.option');opts.forEach(function(o){o.disabled=true;});
+  $('#pr-confirm').disabled=true;
+  const ok=pr.selected===q.answer;
+  state.totalAnswered++;
+  if(ok){
+    opts[pr.selected].classList.add('right');
+    sysSay('✓ 你答对了');
+    pr.correct++;state.totalCorrect++;state.streak++;
+    if(pr.mode==='repair'){const i=state.wrongBook.findIndex(function(w){return w.qid===q.id;});if(i>-1)state.wrongBook.splice(i,1);}
+    if(pr.lz){
+      pr.lz.done++;
+      if(pr.lz.done>=pr.lz.need){
+        pr.lz=null;
+        coachSay(coach().release,function(){pr.idx++;renderNextNormal();});
+      }else{
+        setTimeout(lzNext,700);
+      }
+    }else{
+      if(state.streak%5===0){
+        state.medal++;showEgg();
+        coachSay(EGG_PRAISE[Math.floor(Math.random()*EGG_PRAISE.length)],function(){nextBtn();});
+      }else if(Math.random()<0.3){
+        coachSay(praiseOf(q),function(){nextBtn();},'good');
+      }else{
+        setTimeout(nextBtn,450);
+      }
+    }
+  }else{
+    opts[pr.selected].classList.add('wrongPick');
+    setTimeout(function(){opts[q.answer].classList.add('reveal');},350);
+    sysSay('✗ 你选了：'+q.options[pr.selected]);
+    pr.wrong++;state.streak=0;state.roastCount++;
+    const roastText=roastOf(q);
+    if(pr.mode!=='repair'){
+      const w=state.wrongBook.find(function(w){return w.qid===q.id;});
+      if(w){w.picked=pr.selected;w.roast=roastText;w.coachName=coach().name;w.ts=Date.now();}
+      else{state.wrongBook.push({qid:q.id,picked:pr.selected,roast:roastText,coachName:coach().name,ts:Date.now()});pr.newWrong++;}
+    }
+    if(state.roasts.indexOf(roastText)<0)state.roasts.push(roastText);
+    if(pr.lz){pr.lz.need=Math.min(pr.lz.need+1,5);}
+    const after=function(){
+      if(pr.lz){setActions([{label:'继续连坐',cls:'btn-primary',fn:lzNext}]);}
+      else if(pr.idx>=pr.queue.length-1){setActions([
+        {label:'接受连坐 · 3 题',cls:'btn-primary',fn:startLianzuo},
+        {label:'查看战报',cls:'btn-ghost',fn:showPracticeSummary}
+      ]);}
+      else{setActions([
+        {label:'接受连坐 · 3 题',cls:'btn-primary',fn:startLianzuo},
+        {label:'认怂下一题',cls:'btn-ghost',fn:function(){pr.idx++;renderNextNormal();}}
+      ]);}
+    };
+    if(state.medal>0){state.medal--;coachSay(MEDAL_TEXT,after,'good');}
+    else coachSay(roastText,after,'bad');
+  }
+  save();
+  updatePracticeHUD();
+};
+function nextBtn(){
+  const last=pr.idx>=pr.queue.length-1;
+  setActions([{label:last?'查看战报':'下一题',fn:function(){pr.idx++;renderNextNormal();}}]);
+}
+function lzNext(){
+  if(pr.lz.pos >= pr.lz.pool.length-1){
+    pr.lz.pool = pr.lz.pool.concat(shuffle(QS.filter(function(x){return x.id!==pr.cur.id;})));
+  }
+  pr.lz.pos++; pr.cur=pr.lz.pool[pr.lz.pos]; renderQ();
+}
+function startLianzuo(){
+  pr.lz={pos:0,done:0,need:3,pool:shuffle(QS.filter(function(x){return x.id!==pr.cur.id;}))};
+  sysSay('— 连坐开始 —');
+  coachSay(lianzuoLine(pr.cur.chapter),function(){pr.cur=pr.lz.pool[0];renderQ();});
+}
+function showEgg(){
+  const e=$('#eggBanner');$('#egg-text').textContent='「'+coach().name+'」发放免骂金牌 ×1，下一道错题自动抵扣。';
+  e.style.display='';clearTimeout(e._t);e._t=setTimeout(function(){e.style.display='none';},2600);
+}
+function showPracticeSummary(){
+  const total=pr.correct+pr.wrong;
+  const acc=total?Math.round(pr.correct/total*100):0;
+  const m=document.createElement('div');m.className='overlay';
+  m.innerHTML='<div class="modal">'
+    +'<h3>'+(pr.mode==='repair'?'重修战报':'本轮刷题战报')+'</h3>'
+    +'<div class="big">'+acc+'分</div>'
+    +'<div class="stats">答对 '+pr.correct+' · 答错 '+pr.wrong+' · 被骂 '+state.roastCount+' 次<br>'
+    +(pr.mode!=='repair'?'新增错题 '+pr.newWrong+' 题 · ':'')+'免骂金牌剩余 '+state.medal+'</div>'
+    +'<button class="btn btn-primary" id="m-exam">去模拟考渡劫</button>'
+    +'<button class="btn btn-ghost" id="m-repair">错题重修</button>'
+    +'<button class="btn btn-ghost" id="m-home">回首页</button></div>';
+  $('#phone').appendChild(m);
+  m.querySelector('#m-exam').onclick=function(){m.remove();startExam();};
+  m.querySelector('#m-repair').onclick=function(){m.remove();
+    if(!state.wrongBook.length){toast('错题本是空的，教练想骂都找不到词！');go('home');return;}
+    startPractice('repair',shuffle(state.wrongBook.map(function(w){return QS.find(function(q){return q.id===w.qid;});})));};
+  m.querySelector('#m-home').onclick=function(){m.remove();go('home');};
+}
+
+/* ================= 模拟考 ================= */
+let ex=null,exTimer=null;
+function startExam(){
+  ex={queue:shuffle(QS),idx:0,answers:{},left:300,advanceLock:false};
+  go('exam');renderExQ();updateExTimer();
+  clearInterval(exTimer);exTimer=setInterval(exTick,1000);
+}
+function stopExamTimer(){clearInterval(exTimer);exTimer=null;}
+function exTick(){if(!ex){stopExamTimer();return;}ex.left--;updateExTimer();if(ex.left<=0){stopExamTimer();toast('时间到，自动交卷');submitExam();}}
+function updateExTimer(){
+  if(!ex)return;
+  const m=String(Math.floor(ex.left/60)).padStart(2,'0'),s=String(ex.left%60).padStart(2,'0');
+  const t=$('#ex-timer');t.textContent=m+':'+s;t.classList.toggle('danger',ex.left<60);
+}
+function renderExQ(){
+  const q=ex.queue[ex.idx];
+  ex.advanceLock=false;
+  $('#ex-progress').textContent='第 '+(ex.idx+1)+'/'+ex.queue.length+' 题';
+  $('#ex-fill').style.width=(ex.idx/ex.queue.length*100)+'%';
+  $('#ex-chip').textContent='考点 · '+q.chapter;
+  $('#ex-stem').textContent=q.stem;
+  const box=$('#ex-options');box.innerHTML='';
+  q.options.forEach(function(op,i){
+    const b=document.createElement('button');b.className='option';
+    b.textContent=(q.type==='choice'?('ABCD'[i]+'. '):'')+op;
+    b.onclick=function(){
+      if(ex.advanceLock)return;ex.advanceLock=true;   /* 修复参考版：连点两个选项会跳两题 */
+      box.querySelectorAll('.option').forEach(function(x){x.classList.remove('sel');});
+      b.classList.add('sel');ex.answers[q.id]=i;
+      setTimeout(function(){
+        if(!ex)return;
+        if(ex.idx<ex.queue.length-1){ex.idx++;renderExQ();}
+        else{$('#ex-submit').classList.add('pulse');}
+      },280);
+    };
+    box.appendChild(b);
+  });
+}
+$('#ex-submit').onclick=function(){submitExam();};
+$('#exam-quit').onclick=function(){stopExamTimer();ex=null;go('home');};
+function submitExam(){
+  if(!ex)return;
+  stopExamTimer();
+  let correct=0;const wrongBy={};
+  ex.queue.forEach(function(q){
+    const a=ex.answers[q.id];
+    if(a===q.answer)correct++;
+    else{
+      wrongBy[q.chapter]=(wrongBy[q.chapter]||0)+1;
+      const roastText=roastOf(q);
+      const picked=(a===undefined?-1:a);   /* 修复参考版：未作答曾存成 undefined */
+      const w=state.wrongBook.find(function(w){return w.qid===q.id;});
+      if(w){w.picked=picked;w.roast=roastText;w.coachName=coach().name;w.ts=Date.now();}
+      else state.wrongBook.push({qid:q.id,picked:picked,roast:roastText,coachName:coach().name,ts:Date.now()});
+      if(state.roasts.indexOf(roastText)<0)state.roasts.push(roastText);
+    }
+  });
+  const score=correct*10;
+  state.lastExam={score:score,pass:score>=90};
+  save();
+  ex=null;
+  $('#examSweep').style.display='flex';
+  setTimeout(function(){$('#examSweep').style.display='none';renderResult(score,wrongBy);},2000);
+}
+
+/* ================= 结算 ================= */
+function renderResult(score,wrongBy){
+  const c=coach(),pass=score>=90;
+  const sorted=Object.entries(wrongBy).sort(function(a,b){return b[1]-a[1];});
+  const maxN=sorted.length?sorted[0][1]:0;
+  const level=maxN>=3?'特大事故':(maxN===2?'重大事故':(maxN===1?'一般事故':'无事故'));
+  let body='';
+  if(pass){
+    body='<div class="doc pass">'
+      +'<h2>结 案 书</h2><div class="doc-no">教练我错了 · 事故科签发</div>'
+      +'<div class="score-line"><b>'+score+'</b> <span style="font-size:18px">分</span></div>'
+      +'<div class="sub">本次模拟考 · 准予通过</div>'
+      +'<div class="sec"><span class="lbl">结案陈词</span><div class="judge">'+c.pass+'</div></div>'
+      +'<div class="sec">处理意见：持本结案书前往科二，接受更毒舌的教练。路考的阅卷人，是路况本身。</div>'
+      +'<div class="seal">准予结案</div></div>';
+    $('#result-title').textContent='结案书';
+  }else{
+    const tops=sorted.slice(0,3).map(function(t){return '⚠️ '+t[0]+' · 肇事 '+t[1]+' 起';}).join('<br>')||'（无）';
+    body='<div class="doc">'
+      +'<div class="doc-hazard"></div>'
+      +'<h2>事故报告单</h2><div class="doc-no">编号：JZ-'+Date.now()%100000+' · 教练我错了事故科</div>'
+      +'<div class="score-line"><b>'+score+'</b> <span style="font-size:18px">分</span></div>'
+      +'<div class="sub">距离及格只差 '+(90-score)+' 分 · 及格线 90 分</div>'
+      +'<div class="sec"><span class="lbl">事故等级</span>'+level+(maxN>=2?'（'+sorted[0][0]+' 连续肇事 '+maxN+' 起）':'')+'</div>'
+      +'<div class="sec"><span class="lbl">肇事知识点 Top3</span>'+tops+'</div>'
+      +'<div class="sec"><span class="lbl">教练判词</span><div class="judge">'+c.fail+'</div></div>'
+      +'<div class="seal">挂科专用章</div></div>';
+    $('#result-title').textContent='事故报告单';
+  }
+  $('#result-body').innerHTML=body;
+  const acts=$('#result-actions');acts.innerHTML='';
+  if(!pass){
+    acts.innerHTML='<button class="btn btn-danger" id="r-repair">领取罚单 · 错题重修包</button>';
+    acts.querySelector('#r-repair').onclick=function(){
+      startPractice('repair',shuffle(state.wrongBook.map(function(w){return QS.find(function(q){return q.id===w.qid;});})));};
+  }
+  acts.insertAdjacentHTML('beforeend','<button class="btn btn-ghost" id="r-share">生成分享卡片</button>'
+    +'<button class="btn btn-ghost" id="r-night">🌙 考前夜话</button>'
+    +'<button class="btn btn-ghost" id="r-home">回首页</button>');
+  acts.querySelector('#r-share').onclick=function(){go('share');};
+  acts.querySelector('#r-night').onclick=function(){startNight();};
+  acts.querySelector('#r-home').onclick=function(){go('home');};
+  speak('本次模拟考'+score+'分。'+(pass?c.pass:c.fail));
+  go('result');
+}
+
+/* ================= 分享卡片 ================= */
+let quoteIdx=0;
+function shareQuotes(){return state.roasts.length?state.roasts:['先去把题刷了，再来见我。——'+coach().name];}
+function renderShare(){
+  const c=coach();
+  const pa=$('#p-coach-ava');pa.textContent=c.char;pa.style.background=c.avaBg;pa.style.borderColor=c.color+'55';
+  $('#p-coach-name').textContent=c.name;$('#p-seal').textContent=c.seal;
+  $('#p-score').innerHTML=(state.lastExam?state.lastExam.score:'——')+'<small> 分</small>';
+  $('#p-sub').textContent='今日被教练骂了 '+state.roastCount+' 次 · '+(state.lastExam?(state.lastExam.pass?'渡劫成功':'渡劫失败'):'尚未渡劫');
+  const qs=shareQuotes();quoteIdx=((quoteIdx%qs.length)+qs.length)%qs.length;
+  $('#p-quote').textContent='「'+qs[quoteIdx]+'」';
+}
+$('#quote-prev').onclick=function(){quoteIdx--;renderShare();};
+$('#quote-next').onclick=function(){quoteIdx++;renderShare();};
+$('#share-back').onclick=function(){go(state.lastExam?'result':'home');};
+
+/* 离线保存图片：canvas 手绘海报（替代参考版的 html2canvas CDN，离线可用） */
+function wrapLines(x,text,maxW){
+  const lines=[];let line='';
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(x.measureText(line+ch).width>maxW){lines.push(line);line=ch;}
+    else line+=ch;
+  }
+  if(line)lines.push(line);
+  return lines;
+}
+function drawPoster(){
+  const W=540,H=960,cv=document.createElement('canvas');cv.width=W;cv.height=H;
+  const x=cv.getContext('2d');
+  const g=x.createLinearGradient(0,0,W*0.35,H);g.addColorStop(0,'#2e2e34');g.addColorStop(1,'#191a1e');
+  x.fillStyle=g;x.fillRect(0,0,W,H);
+  /* 顶部警示条纹 */
+  x.save();x.beginPath();x.rect(32,32,W-64,20);x.clip();
+  x.translate(32,32);x.rotate(0);
+  for(let i=-2;i<40;i++){
+    x.fillStyle=i%2?'#141414':'#F5C518';
+    x.save();x.translate(i*26,-14);x.rotate(-Math.PI/4);
+    x.fillRect(0,0,18,60);x.restore();
+  }
+  x.restore();
+  /* logo */
+  x.fillStyle='#f2f2f2';x.font='900 26px sans-serif';x.textBaseline='top';
+  x.fillText('教练',40,78);
+  const w1=x.measureText('教练').width;
+  x.fillStyle='#FF7A00';x.fillText('我错了',40+w1,78);
+  const w2=x.measureText('我错了').width;
+  x.fillStyle='#9a9aa2';x.font='400 22px sans-serif';
+  x.fillText(' · 驾考渡劫实录',40+w1+w2,80);
+  /* 成绩 */
+  const scoreTxt=state.lastExam?String(state.lastExam.score):'——';
+  x.fillStyle='#FF7A00';x.font='900 120px Georgia,serif';
+  x.fillText(scoreTxt,40,180);
+  const sw=x.measureText(scoreTxt).width;
+  x.fillStyle='#9a9aa2';x.font='400 26px sans-serif';x.fillText('分',44+sw,240);
+  x.font='400 24px sans-serif';
+  x.fillText('今日被教练骂了 '+state.roastCount+' 次 · '+(state.lastExam?(state.lastExam.pass?'渡劫成功':'渡劫失败'):'尚未渡劫'),40,330);
+  /* 骂语引用框 */
+  const qs=shareQuotes();
+  const quote='「'+qs[((quoteIdx%qs.length)+qs.length)%qs.length]+'」';
+  const qx=40,qy=470,qw=W-80;
+  x.fillStyle='#141416';
+  x.beginPath();x.rect(qx,qy,qw,230);x.fill();
+  x.fillStyle='#FF7A00';x.fillRect(qx,qy,8,230);
+  x.fillStyle='#e8e8ec';x.font='400 25px sans-serif';
+  const lines=wrapLines(x,quote,qw-48).slice(0,6);
+  lines.forEach(function(l,i){x.fillText(l,qx+28,qy+26+i*36);});
+  /* 底部：教练 / 二维码占位 / 印章 */
+  const c=coach();
+  x.beginPath();x.arc(76,H-108,30,0,Math.PI*2);x.fillStyle=c.avaBg;x.fill();
+  x.lineWidth=3;x.strokeStyle=c.color;x.stroke();
+  x.fillStyle='#fff';x.font='900 26px sans-serif';x.textAlign='center';x.fillText(c.char,76,H-119);
+  x.textAlign='left';x.fillStyle='#c9c9d1';x.font='400 22px sans-serif';x.fillText(c.name,116,H-114);
+  x.setLineDash([6,5]);x.strokeStyle='#6a6a72';x.lineWidth=2;
+  x.strokeRect(W/2-42,H-142,84,84);
+  x.setLineDash([]);
+  x.fillStyle='#8a8a92';x.font='400 17px sans-serif';x.textAlign='center';
+  x.fillText('扫码挨骂',W/2,H-104);x.fillText('（占位）',W/2,H-80);
+  x.save();x.translate(W-88,H-96);x.rotate(-0.24);
+  x.beginPath();x.arc(0,0,44,0,Math.PI*2);x.lineWidth=5;x.strokeStyle='#e5484d';x.stroke();
+  x.fillStyle='#e5484d';x.font='900 24px sans-serif';x.globalAlpha=0.92;
+  x.fillText(c.seal,0,-4);x.fillText('验讫',0,24);
+  x.restore();
+  return cv;
+}
+$('#btn-save').onclick=function(){
+  try{
+    const cv=drawPoster();
+    const a=document.createElement('a');
+    a.download='教练我错了-成绩卡.png';
+    a.href=cv.toDataURL('image/png');
+    a.click();
+    toast('已保存（浏览器下载）');
+  }catch(e){toast('生成失败，请直接截图');}
+};
+
+/* ================= 考前夜话 ================= */
+function startNight(){
+  go('night');
+  const na=$('#night-ava');na.textContent=coach().char;na.style.background=coach().avaBg;
+  const box=$('#night-lines');box.innerHTML='';
+  $('#night-done').style.display='none';
+  let i=0;
+  const nextLine=function(){
+    if(!$('#scr-night').classList.contains('active'))return;
+    if(i>=NIGHT_LINES.length){$('#night-done').style.display='';return;}
+    const text=NIGHT_LINES[i];const last=i===NIGHT_LINES.length-1;i++;
+    const b=document.createElement('div');
+    b.className='bubble soft'+(last?' night-gold':'');
+    box.appendChild(b);
+    speak(text);
+    typer(b,text,80,function(){setTimeout(nextLine,600);});
+    box.scrollTop=box.scrollHeight;
+  };
+  nextLine();
+}
+$('#btn-night-mini').onclick=function(){startNight();};
+$('#night-back').onclick=function(){go('home');};
+$('#night-done').onclick=function(){toast('晚安，明天考场见。');go('home');};
+
+/* ================= 错题本 ================= */
+function renderWrong(){
+  const box=$('#wrong-body');
+  if(!state.wrongBook.length){
+    box.innerHTML='<div class="empty">错题本是空的，<br>教练想骂都找不到词。<br>去刷题，给他一点面子。</div>';
+    return;
+  }
+  const groups={};
+  state.wrongBook.forEach(function(w){const q=QS.find(function(x){return x.id===w.qid;});if(!q)return;(groups[q.chapter]=groups[q.chapter]||[]).push({q:q,w:w});});
+  let html='';
+  Object.entries(groups).forEach(function(en){
+    const ch=en[0],items=en[1];
+    html+='<div class="acc"><div class="acc-head">'+ch+'<span class="n">'+items.length+' 题</span></div><div class="acc-items">';
+    items.forEach(function(it){
+      const q=it.q,w=it.w;
+      html+='<div class="w-item">'
+        +'<div class="stem">'+q.stem+'</div>'
+        +'<div class="w-line">当时你选：<b class="no">'+(w.picked<0||w.picked==null?'未作答':q.options[w.picked])+'</b> · 正确答案：<b class="ok">'+q.options[q.answer]+'</b></div>'
+        +'<div class="w-roast"><span class="tag-mem">回忆杀'+(w.coachName?' · '+w.coachName:'')+'</span>'+(w.roast||roastOf(q))+'</div>'
+        +'<div class="w-tip">📌 '+q.tip+'</div></div>';
+    });
+    html+='</div></div>';
+  });
+  box.innerHTML=html;
+  box.querySelectorAll('.acc-head').forEach(function(h){h.onclick=function(){h.parentElement.classList.toggle('open');};});
+}
+$('#btn-repair').onclick=function(){
+  if(!state.wrongBook.length){toast('错题本是空的，教练想骂都找不到词！');return;}
+  startPractice('repair',shuffle(state.wrongBook.map(function(w){return QS.find(function(q){return q.id===w.qid;});})));
+};
+
+/* ================= 设置 ================= */
+function renderSettings(){
+  const chips=$('#set-coach-chips');chips.innerHTML='';
+  Object.values(COACHES).forEach(function(c){
+    const b=document.createElement('div');b.className='cchip'+(state.coach===c.key?' sel':'');
+    b.textContent=c.char+' · '+c.name;
+    b.onclick=function(){state.coach=c.key;save();renderSettings();buildCoachList();speak(c.sample);};
+    chips.appendChild(b);
+  });
+  $('#sw-voice').classList.toggle('on',state.voiceOn);
+  $('#sw-gentle').classList.toggle('on',state.gentleMode);
+}
+$('#sw-voice').onclick=function(){state.voiceOn=!state.voiceOn;if(!state.voiceOn){try{speechSynthesis.cancel();}catch(e){}}save();renderSettings();};
+$('#sw-gentle').onclick=function(){state.gentleMode=!state.gentleMode;save();renderSettings();toast(state.gentleMode?'温柔模式已开启：教练放轻了语气':'温柔模式已关闭：做好挨骂准备');};
+$('#btn-reset').onclick=function(){
+  if(confirm('确定重置全部进度？错题本、金牌、成绩都会清空。')){state=freshState();save();buildCoachList();go('home');toast('已重置，重新做人（重新挨骂）');}
+};
+
+/* ================= 初始化 ================= */
+buildCoachList();
+</script>
+</body>
+</html>
