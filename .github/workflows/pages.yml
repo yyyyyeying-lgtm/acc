@@ -24,8 +24,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure Pages (auto-enable if needed)
+      - name: Configure Pages (尝试自动开启，失败则跳过)
         uses: actions/configure-pages@v5
+        continue-on-error: true
         with:
           enablement: true
 

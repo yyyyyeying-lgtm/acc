@@ -8,6 +8,7 @@
 ## 在线体验
 
 - 在线预览（任何浏览器直接打开）：https://htmlpreview.github.io/?https://github.com/yyyyyeying-lgtm/acc/blob/main/index.html
+- GitHub Pages（在仓库 Settings → Pages 中选择 GitHub Actions 后自动发布）：https://yyyyyeying-lgtm.github.io/acc/
 - 仓库地址：https://github.com/yyyyyeying-lgtm/acc
 - 直接把 `index.html` 下载到本地双击也能跑（无任何外部依赖，离线可用）
 
